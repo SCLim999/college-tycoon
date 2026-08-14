@@ -136,6 +136,7 @@ button:disabled { opacity: .38; cursor: not-allowed; }
 /* ---------- campus scene ---------- */
 
 .campus-frame {
+  position: relative;
   margin: 14px 18px 0;
   border: 1px solid var(--line-soft);
   border-radius: var(--radius);
@@ -146,8 +147,36 @@ button:disabled { opacity: .38; cursor: not-allowed; }
 }
 #campus {
   display: block;
-  margin: 0 auto;
+  width: 100%;
+  cursor: grab;
+  touch-action: none;
   image-rendering: pixelated;
+}
+#campus:active { cursor: grabbing; }
+
+.campus-hint {
+  position: absolute;
+  right: 10px;
+  bottom: 8px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(8, 13, 22, .62);
+  font-size: 11px;
+  line-height: 1.6;
+  color: #cfe0f2;
+  pointer-events: none;
+}
+
+/* Clicking a block on the map jumps to its card. */
+.dept.flash {
+  animation: deptFlash 1.2s ease-out;
+}
+@keyframes deptFlash {
+  0%, 100% { box-shadow: var(--shadow); }
+  25% { box-shadow: 0 0 0 2px var(--accent), var(--shadow); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dept.flash { animation: none; box-shadow: 0 0 0 2px var(--accent), var(--shadow); }
 }
 
 .dept-icon.avatar {

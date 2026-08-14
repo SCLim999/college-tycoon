@@ -58,25 +58,42 @@ to *University College*.
 | `js/main.js` | Bootstrap, input wiring, autoplay |
 | `build-standalone.js` | Inlines everything into one HTML file for hosting |
 
-## The campus scene
+## The isometric campus
 
-The banner above the dashboard is a read-only view of the simulation, drawn on
-a coarse "art pixel" grid with `fillRect` — no image files, no sprite sheets,
-no dependencies. It reacts to the run:
+The map above the dashboard is a RollerCoaster-Tycoon-style 3/4 view of the
+site you are running, and a strictly read-only projection of the simulation:
 
-- **Buildings** rise with each department's level, one building per department
-  in its own colour, and windows light up as you take on staff.
-- **The crowd** grows with enrolment. Staff characters appear per department as
-  you hire, and graduates in gowns show up once alumni accumulate.
-- **The sky** clouds over and desaturates as reputation falls, and clears as it
-  recovers.
+- **Department blocks** rise a storey per level, each with its own massing —
+  the vocational block is a low sawtooth manufacturing shed, Corporate
+  Training is a narrow tower, and so on.
+- **Every facility you buy appears as a building** in that department's
+  precinct, drawn in an architecture that matches what it is: workshops and
+  production lines are industrial sheds, libraries and teaching blocks are
+  brick with punched windows, competition venues and open-day halls get
+  pitched roofs, everything else is a glazed block.
+- **Staff and learners walk the paths.** The crowd grows with enrolment, staff
+  characters appear per department as you hire, and graduates in gowns show up
+  once alumni accumulate. They random-walk the path network tile by tile.
+- Drag to pan; click a department block to jump to its card.
 
-Characters are authored in `js/sprites.js` as string grids, one letter per
-pixel, indexing a palette — so a new character is a 10×13 block of text plus a
-handful of hex values. Students get a per-instance palette so a full campus
-reads as a crowd rather than a uniform. The scene honours
-`prefers-reduced-motion` (drawn once, no walk cycle) and pauses when the tab is
-hidden.
+The site plan follows [ViTrox Campus 2.0](https://www.cycarch.com/vitrox-campus-20/):
+a central circular courtyard built around a reflecting pool, department blocks
+arranged on a radial axis around it, a perimeter cycle loop, and rooftop solar
+PV throughout.
+
+### How it is drawn
+
+Everything renders at a low "art pixel" resolution (16x8 tiles) and is blitted
+once with nearest-neighbour scaling, so the map sits on the same pixel grid as
+the characters. There are no image files anywhere — terrain diamonds are
+scanline `fillRect`s, buildings are iso quads, characters are the string grids
+in `js/sprites.js`.
+
+Terrain and each building are cached as their own offscreen canvases, so a
+frame costs one blit per object rather than thousands of draw calls. A fully
+built campus — 30 buildings, ~50 characters, ~120 trees — holds 60fps. The
+terrain is baked past the viewport edges so panning never reveals bare canvas,
+and the whole scene honours `prefers-reduced-motion` and pauses on tab hide.
 
 ## Tuning it
 
