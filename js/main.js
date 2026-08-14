@@ -6,6 +6,16 @@ let S = null;
 let autoTimer = null;
 let chosenDifficulty = "standard";
 
+/** Sandboxed frames can block window.confirm; treat a blocked prompt as consent
+    rather than leaving the button silently dead. */
+function askConfirm(question) {
+  try {
+    return typeof confirm === "function" ? confirm(question) : true;
+  } catch (err) {
+    return true;
+  }
+}
+
 /* ---------- start screen ---------- */
 
 function renderStartScreen() {
@@ -115,7 +125,7 @@ function init() {
   });
 
   el("restartBtn").addEventListener("click", () => {
-    if (S && !S.over && !confirm("Abandon this five-year plan and start over?")) return;
+    if (S && !S.over && !askConfirm("Abandon this five-year plan and start over?")) return;
     stopAuto();
     S = null;
     el("endOverlay").hidden = true;
