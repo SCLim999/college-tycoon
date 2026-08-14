@@ -50,10 +50,33 @@ to *University College*.
 | `index.html` | Page shell, start/event/end/help modals |
 | `css/game.css` | Styling |
 | `js/util.js` | Formatting and small helpers |
+| `js/sprites.js` | Pixel-art characters — string grids plus the drawing routine |
+| `js/campus.js` | The animated campus scene |
 | `js/data.js` | **All tuning lives here** — economy constants, departments, facilities, difficulties, events |
 | `js/engine.js` | Simulation: state, derived figures, the monthly tick, scoring, saves |
 | `js/ui.js` | Rendering (reads state, writes DOM) |
 | `js/main.js` | Bootstrap, input wiring, autoplay |
+| `build-standalone.js` | Inlines everything into one HTML file for hosting |
+
+## The campus scene
+
+The banner above the dashboard is a read-only view of the simulation, drawn on
+a coarse "art pixel" grid with `fillRect` — no image files, no sprite sheets,
+no dependencies. It reacts to the run:
+
+- **Buildings** rise with each department's level, one building per department
+  in its own colour, and windows light up as you take on staff.
+- **The crowd** grows with enrolment. Staff characters appear per department as
+  you hire, and graduates in gowns show up once alumni accumulate.
+- **The sky** clouds over and desaturates as reputation falls, and clears as it
+  recovers.
+
+Characters are authored in `js/sprites.js` as string grids, one letter per
+pixel, indexing a palette — so a new character is a 10×13 block of text plus a
+handful of hex values. Students get a per-instance palette so a full campus
+reads as a crowd rather than a uniform. The scene honours
+`prefers-reduced-motion` (drawn once, no walk cycle) and pauses when the tab is
+hidden.
 
 ## Tuning it
 

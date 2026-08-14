@@ -131,7 +131,7 @@ function renderDepts(S) {
 
     return `<article class="dept">
       <div class="dept-head">
-        <div class="dept-icon">${dept.icon}</div>
+        <canvas class="dept-icon avatar" data-sprite="${dept.id}"></canvas>
         <div class="dept-title">
           <h3>${esc(dept.name)}</h3>
           <p>${esc(dept.tagline)}</p>
@@ -160,6 +160,11 @@ function renderDepts(S) {
       </div>
     </article>`;
   }).join("");
+
+  /* The cards are rebuilt wholesale, so their canvases are new every time. */
+  for (const cv of el("depts").querySelectorAll("canvas.avatar")) {
+    drawAvatar(cv, cv.dataset.sprite, 3);
+  }
 }
 
 /* ---------- sidebar ---------- */
@@ -309,6 +314,7 @@ function renderEndModal(S) {
 function render(S) {
   renderStats(S);
   renderDepts(S);
+  campusUpdate(S);
   renderReport(S);
   renderObjectives(S);
   renderNews(S);

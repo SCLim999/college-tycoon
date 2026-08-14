@@ -17,6 +17,8 @@
     <div class="stats" id="stats"></div>
   </header>
 
+  <div class="campus-frame"><canvas id="campus"></canvas></div>
+
   <main>
     <section class="depts" id="depts"></section>
 
@@ -66,6 +68,7 @@
       and <b>Education STEM</b> (school outreach). Every month you choose where the money goes.
       After sixty months the board scores what you built.
     </p>
+    <div class="lineup" id="lineup"></div>
     <div class="diffs" id="diffList"></div>
     <button id="newGameBtn" class="btn-primary" style="width:100%;padding:11px">Begin the five-year plan</button>
     <button id="continueBtn" class="btn-ghost" style="width:100%;margin-top:9px;padding:10px" hidden>Continue saved game</button>
@@ -110,8 +113,10 @@
 <div id="toast"></div>
 
 <script src="js/util.js"></script>
+<script src="js/sprites.js"></script>
 <script src="js/data.js"></script>
 <script src="js/engine.js"></script>
+<script src="js/campus.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/main.js"></script>
 </body>

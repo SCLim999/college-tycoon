@@ -19,6 +19,13 @@ function askConfirm(question) {
 /* ---------- start screen ---------- */
 
 function renderStartScreen() {
+  el("lineup").innerHTML = DEPARTMENTS.map((d) =>
+    `<figure><canvas class="avatar" data-sprite="${d.id}"></canvas>
+       <figcaption>${esc(d.name.replace(/ Department$/, ""))}</figcaption></figure>`).join("");
+  for (const cv of el("lineup").querySelectorAll("canvas.avatar")) {
+    drawAvatar(cv, cv.dataset.sprite, 4);
+  }
+
   el("diffList").innerHTML = DIFFICULTIES.map((d) =>
     `<button class="diff${d.id === chosenDifficulty ? " on" : ""}" data-diff="${d.id}">
        <div class="dn">${esc(d.name)} · starting cash ${moneyShort(d.cash)}</div>
@@ -74,6 +81,7 @@ function onDeptClick(e) {
 /* ---------- wiring ---------- */
 
 function init() {
+  campusInit();
   renderStartScreen();
 
   el("diffList").addEventListener("click", (e) => {
@@ -152,7 +160,10 @@ function init() {
     el("startOverlay").hidden = false;
   });
 
-  window.addEventListener("resize", () => { if (S) renderChart(S); });
+  window.addEventListener("resize", () => {
+    campusResize();
+    if (S) renderChart(S);
+  });
 
   document.addEventListener("keydown", (e) => {
     if (!S || S.pending || S.over) return;
