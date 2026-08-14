@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>College Tycoon</title>
+<meta name="description" content="Run a five-department private college: corporate training, academics, marketing, STEM outreach and vocational education.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🏛️</text></svg>">
+<link rel="stylesheet" href="css/game.css">
+</head>
+<body>
+
+<div id="app">
+
+  <header class="topbar">
+    <div class="brand">🏛️ <span>College Tycoon</span><small>five-department campus sim</small></div>
+    <div class="stats" id="stats"></div>
+  </header>
+
+  <main>
+    <section class="depts" id="depts"></section>
+
+    <aside class="side">
+      <div class="panel" id="reportPanel"></div>
+      <div class="panel">
+        <h4>Five-year trend</h4>
+        <canvas id="chart"></canvas>
+        <div class="legend">
+          <span><i style="background:#2fd4d4"></i>Cash</span>
+          <span><i style="background:#3b82f6"></i>Learners</span>
+          <span><i style="background:#fbbf24"></i>Reputation</span>
+        </div>
+      </div>
+      <div class="panel" id="objPanel"></div>
+      <div class="panel news" id="newsPanel"></div>
+    </aside>
+  </main>
+
+  <p class="foot-note">
+    A fictional management simulation. Department structure inspired by ViTrox College;
+    not an official ViTrox product and not a model of any real institution's finances.
+  </p>
+
+  <footer class="controls">
+    <button id="nextBtn" class="btn-primary">Advance one month ▶</button>
+    <button id="autoBtn">▶ Auto</button>
+    <span class="hint">Space advances a month</span>
+    <span class="spacer"></span>
+    <button id="saveBtn" class="btn-ghost">Save</button>
+    <button id="loadBtn" class="btn-ghost">Load</button>
+    <button id="helpBtn" class="btn-ghost">How to play</button>
+    <button id="restartBtn" class="btn-ghost">Restart</button>
+  </footer>
+
+</div>
+
+<!-- start screen -->
+<div class="overlay" id="startOverlay">
+  <div class="card">
+    <h2>🏛️ College Tycoon</h2>
+    <p class="sub">Five years. Five departments. One campus to build.</p>
+    <p>
+      You have just been appointed to run a private college with five departments:
+      <b>College</b> (diploma &amp; degree), <b>Vocational Education</b> (TVET),
+      <b>Corporate Training</b> (industry clients), <b>Marketing</b> (enquiries and brand),
+      and <b>Education STEM</b> (school outreach). Every month you choose where the money goes.
+      After sixty months the board scores what you built.
+    </p>
+    <div class="diffs" id="diffList"></div>
+    <button id="newGameBtn" class="btn-primary" style="width:100%;padding:11px">Begin the five-year plan</button>
+    <button id="continueBtn" class="btn-ghost" style="width:100%;margin-top:9px;padding:10px" hidden>Continue saved game</button>
+  </div>
+</div>
+
+<!-- event modal -->
+<div class="overlay" id="eventOverlay" hidden>
+  <div class="card" id="eventBody"></div>
+</div>
+
+<!-- end-of-game modal -->
+<div class="overlay" id="endOverlay" hidden>
+  <div class="card" id="endBody"></div>
+</div>
+
+<!-- help modal -->
+<div class="overlay" id="helpOverlay" hidden>
+  <div class="card">
+    <h2>How to play</h2>
+    <p class="sub">Everything compounds. Nothing is free.</p>
+    <ul class="rules">
+      <li><b>Marketing</b> generates enquiries; <b>reputation</b> and <b>conversion</b> turn them into
+          enrolments. Enrolments are capped by seats, so expand before you advertise.</li>
+      <li><b>College</b> and <b>Vocational</b> departments carry the recurring fee income.
+          Their quality depends on the learner-to-staff ratio — grow enrolment without hiring
+          and quality, reputation and retention all slide.</li>
+      <li><b>Corporate Training</b> converts industry partners into high-margin programmes.
+          You can only deliver as many programmes as your trainers can staff.</li>
+      <li><b>Education STEM</b> earns little directly, but feeds the applicant pipeline and
+          builds the community goodwill that lifts reputation.</li>
+      <li><b>Compliance</b> decays every month. Let it fall and the regulator will find you.</li>
+      <li><b>Funding modes</b> (Lean → Max) trade cash for output and staff morale.
+          Lean is a real option when the runway is short — just not for long.</li>
+      <li>The board reviews you every 12 months and may release a development grant.</li>
+      <li>You lose if cash falls below −RM 300,000 or reputation collapses.</li>
+    </ul>
+    <button id="helpCloseBtn" class="btn-primary" style="width:100%;margin-top:14px;padding:10px">Back to campus</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="js/util.js"></script>
+<script src="js/data.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
