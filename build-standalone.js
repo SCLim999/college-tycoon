@@ -2,7 +2,7 @@
 /* Inline css/ and js/ into one self-contained HTML file.
    Used to publish the game somewhere that can only serve a single page.
 
-     node college-tycoon/build-standalone.js [outfile]
+     node build-standalone.js [outfile]
 
    Reads the real sources, so the bundle can never drift from the repo. */
 

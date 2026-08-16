@@ -3,7 +3,7 @@
 A browser-based management simulation. You run a private college with five
 departments for five years, and the board scores what you built.
 
-Open `college-tycoon/index.html` in any browser — no build step, no server,
+Open `index.html` in any browser — no build step, no server,
 no dependencies. Progress saves to `localStorage`.
 
 ## The five departments
