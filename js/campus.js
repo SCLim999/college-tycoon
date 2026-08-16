@@ -95,13 +95,15 @@ const campus = {
   buildings: [],
   props: [],
   actors: [],
-  hitboxes: [],                   // {id, x, y, w, h} in css px, for clicks
   panX: 0, panY: 0,               // viewport offset in art pixels
   padX: 0, padY: 0,               // terrain painted this far past the viewport
   drag: null,
   signature: "",
+  builtAt: {},                    // facility key -> game month it appeared
+  lastTick: -1,                   // negative until the first update of a session
   raf: null, lastT: 0, reduced: false, seed: 1,
-  view: { levels: {}, staff: {}, owned: {}, learners: 0, alumni: 0, rep: 45, over: null },
+  view: { levels: {}, staff: {}, owned: {}, learners: 0, alumni: 0, rep: 45,
+          tick: 0, over: null },
 };
 
 /* ---------- projection ---------- */
@@ -241,6 +243,14 @@ function findAnnexSpot(x0, y0, zone, w, h, out, k) {
   return null;
 }
 
+const CONSTRUCTION_MONTHS = 2;
+
+function isUnderConstruction(deptId, facId) {
+  const since = campus.builtAt[deptId + ":" + facId];
+  if (since === undefined) return false;
+  return campus.view.tick - since < CONSTRUCTION_MONTHS;
+}
+
 /** Rebuild the building list from the departments and facilities owned. */
 function layoutBuildings() {
   buildSitePlan();
@@ -275,6 +285,7 @@ function layoutBuildings() {
         id: zone.id, kind: "facility", facId, x0: spot.x, y0: spot.y, w: fw, h: 2,
         height: 12 + (k % 3) * 4, storeys: 2, style: FACILITY_STYLE[facId] || "glass",
         accent: zone.accent, staff: 6, level: 1,
+        underConstruction: isUnderConstruction(zone.id, facId),
       });
     });
   });
@@ -297,12 +308,31 @@ function layoutBuildings() {
     }
   }
 
+  /* Parked cars and path lighting — small signs of a campus in use. */
+  const CAR_COLOURS = ["#c0503f", "#3f6fb5", "#d8d2c4", "#4a4f57", "#3f8a5f"];
+  let carN = 0;
+  for (let ty = 1; ty < MAP_N - 1; ty++) {
+    for (let tx = 1; tx < MAP_N - 1; tx++) {
+      const kind = tileAt(tx, ty);
+      if (kind === TERRAIN.ASPHALT) {
+        if ((tx + ty) % 2 === 0 && tileHash(tx, ty) < 0.62) {
+          campus.props.push({ tx, ty, kind: "car", v: tileHash(tx * 5, ty * 3),
+                              colour: CAR_COLOURS[carN++ % CAR_COLOURS.length] });
+        }
+      } else if (kind === TERRAIN.PATH && tileHash(tx * 7, ty * 11) < 0.035
+                 && !taken.has(tileIndex(tx, ty))) {
+        campus.props.push({ tx, ty, kind: "lamp", v: 0 });
+      }
+    }
+  }
+
   /* Walkable set for the crowd. */
   campus.walkable = [];
   for (let ty = 0; ty < MAP_N; ty++) {
     for (let tx = 0; tx < MAP_N; tx++) {
       const k = tileAt(tx, ty);
-      if ((k === TERRAIN.PATH || k === TERRAIN.PLAZA) && !taken.has(tileIndex(tx, ty))) {
+      const lamp = campus.props.some((p) => p.kind === "lamp" && p.tx === tx && p.ty === ty);
+      if ((k === TERRAIN.PATH || k === TERRAIN.PLAZA) && !taken.has(tileIndex(tx, ty)) && !lamp) {
         campus.walkable.push({ tx, ty });
       }
     }
@@ -333,6 +363,7 @@ function campusInit() {
   campus.canvas.addEventListener("pointermove", onPointerMove);
   campus.canvas.addEventListener("pointerup", onPointerUp);
   campus.canvas.addEventListener("pointercancel", () => { campus.drag = null; });
+  campus.canvas.addEventListener("pointerleave", () => { showTip(null, {}); });
   document.addEventListener("visibilitychange", () => {
     document.hidden ? campusStop() : campusStart();
   });
@@ -384,7 +415,12 @@ function onPointerDown(e) {
 
 function onPointerMove(e) {
   const d = campus.drag;
-  if (!d) return;
+  if (!d) {
+    const a = pointerArt(e);
+    showTip(buildingAt(a.x, a.y), e);
+    return;
+  }
+  showTip(null, e);
   const dx = e.clientX - d.x, dy = e.clientY - d.y;
   d.moved = Math.max(d.moved, Math.abs(dx) + Math.abs(dy));
   campus.panX = d.panX + dx / campus.scale;
@@ -635,6 +671,41 @@ function quad(g, pts, colour) {
   g.fill();
 }
 
+/**
+ * Scaffolding, hoarding and a tower crane, so a newly bought facility
+ * visibly goes up rather than popping into existence finished.
+ */
+function drawScaffolding(g, P, W, S, E, H) {
+  const pole = "#d8b13a";
+
+  /* Scaffold lifts on both visible faces. */
+  for (let v = 7; v < H + 3; v += 8) {
+    quad(g, [P(W, v), P(S, v), P(S, v - 1), P(W, v - 1)], pole);
+    quad(g, [P(S, v), P(E, v), P(E, v - 1), P(S, v - 1)], pole);
+  }
+
+  /* Uprights at the three visible corners. */
+  g.fillStyle = pole;
+  for (const corner of [W, S, E]) {
+    const top = P(corner, H + 5), base = P(corner, 0);
+    g.fillRect(Math.round(top[0]) - 1, Math.round(top[1]), 2, Math.round(base[1] - top[1]));
+  }
+
+  /* Site hoarding around the base. */
+  quad(g, [P(W, 5), P(S, 5), P(S), P(W)], "#3f6f8c");
+  quad(g, [P(S, 5), P(E, 5), P(E), P(S)], "#4a80a1");
+
+  /* Tower crane just off the front corner. */
+  const mastX = Math.round(P(S, 0)[0]) + 9;
+  const mastBase = Math.round(P(S, 0)[1]);
+  const mastTop = Math.round(P(S, H + 22)[1]);
+  g.fillStyle = "#e0a92e";
+  g.fillRect(mastX, mastTop, 2, mastBase - mastTop);
+  g.fillRect(mastX - 14, mastTop, 26, 2);           // jib
+  g.fillRect(mastX - 13, mastTop + 2, 1, 6);        // hoist line
+  g.fillRect(mastX - 15, mastTop + 8, 5, 3);        // load
+}
+
 /* Palettes per architectural style, so a precinct is legible at a glance. */
 const STYLE_PALETTE = {
   glass: { lit: "#ccd5df", dark: "#a8b3c1", roof: "#dde3ea", glassL: "#33506b", glassR: "#3f6c8f" },
@@ -756,11 +827,24 @@ function buildBuildingCache(b) {
   quad(g, [P(S, 4), P([S[0] + 7, S[1] + 3], 4), P([S[0] + 7, S[1] + 3], 1), P(S, 1)],
        shade(b.accent, 0.85));
 
+  /* A facility finished this month or last is still a building site. */
+  if (b.underConstruction) drawScaffolding(g, P, W, S, E, H);
+
   /* Rooftop plant on the taller department blocks. */
   if (b.kind === "block" && style === "glass") {
     quad(g, [P([N[0], N[1] + 2], H + 5), P([E[0] - 4, E[1]], H + 5),
              P([E[0] - 4, E[1]], H + 2), P([N[0], N[1] + 2], H + 2)], "#b9c3cf");
   }
+
+  /* Alpha mask for pointer hit-testing: iso bounding boxes overlap heavily,
+     so the silhouette is the only way to pick the building actually under
+     the cursor. Sampled once here rather than per pointer move. */
+  const px = g.getImageData(0, 0, c.width, c.height).data;
+  const mask = new Uint8Array(c.width * c.height);
+  for (let i = 0; i < mask.length; i++) mask[i] = px[i * 4 + 3];
+  b.mask = mask;
+  b.maskW = c.width;
+  b.maskH = c.height;
 
   b.cache = c;
   b.cacheX = minX;
@@ -833,19 +917,30 @@ function campusDraw() {
   out.clearRect(0, 0, campus.artW * campus.scale, campus.artH * campus.scale);
   out.drawImage(campus.art, 0, 0, campus.artW * campus.scale, campus.artH * campus.scale);
 
-  campus.hitboxes = campus.buildings
-    .filter((b) => b.kind === "block")
-    .map((b) => ({
-      id: b.id,
-      x: (b.cacheX + campus.panX) * campus.scale,
-      y: (b.cacheY + campus.panY) * campus.scale,
-      w: b.cache.width * campus.scale, h: b.cache.height * campus.scale,
-    }));
 }
 
 function drawProp(g, p) {
   const x = Math.round(isoX(p.tx, p.ty));
   const y = Math.round(isoY(p.tx, p.ty));
+  if (p.kind === "car") {
+    const w = p.v > 0.5 ? 9 : 8;
+    g.fillStyle = "rgba(12, 22, 14, 0.3)";
+    g.fillRect(x - w / 2, y - 1, w, 3);
+    g.fillStyle = shade(p.colour, 0.75);
+    g.fillRect(x - w / 2, y - 5, w, 4);
+    g.fillStyle = p.colour;
+    g.fillRect(x - w / 2, y - 7, w, 2);
+    g.fillStyle = "#9fc6dd";
+    g.fillRect(x - w / 2 + 2, y - 6, w - 4, 1);
+    return;
+  }
+  if (p.kind === "lamp") {
+    g.fillStyle = "#7d848d";
+    g.fillRect(x, y - 11, 1, 11);
+    g.fillStyle = "#e8d9a8";
+    g.fillRect(x - 1, y - 13, 3, 2);
+    return;
+  }
   if (p.kind === "bush") {
     g.fillStyle = "#3c7330";
     g.fillRect(x - 3, y - 3, 6, 3);
@@ -866,17 +961,66 @@ function drawProp(g, p) {
 
 /* ---------- interaction ---------- */
 
-function onCampusClick(e) {
+/** Pointer position in art-space, undoing the css scale and the pan. */
+function pointerArt(e) {
   const rect = campus.canvas.getBoundingClientRect();
-  const x = e.clientX - rect.left, y = e.clientY - rect.top;
-  /* Front-most building wins, so a block in front is not stolen by one behind. */
-  const hit = campus.hitboxes
-    .filter((b) => x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h)
-    .pop();
+  return {
+    x: (e.clientX - rect.left) / campus.scale - campus.panX,
+    y: (e.clientY - rect.top) / campus.scale - campus.panY,
+  };
+}
+
+/** Front-most building whose painted silhouette covers this art-space point. */
+function buildingAt(ax, ay) {
+  const order = campus.buildings.slice().sort((p, q) => q.depth - p.depth);
+  for (const b of order) {
+    if (!b.mask) continue;
+    const x = Math.floor(ax - b.cacheX), y = Math.floor(ay - b.cacheY);
+    if (x < 0 || y < 0 || x >= b.maskW || y >= b.maskH) continue;
+    /* Above the ground-shadow alpha, so the shadow is not clickable. */
+    if (b.mask[y * b.maskW + x] > 120) return b;
+  }
+  return null;
+}
+
+function buildingLabel(b) {
+  const dept = deptById(b.id);
+  if (!dept) return "";
+  if (b.kind === "block") {
+    return `${dept.name} — level ${b.level}, ${b.staff} ${dept.staffTitle.toLowerCase()}`;
+  }
+  const fac = dept.facilities.find((f) => f.id === b.facId);
+  const name = fac ? fac.name : b.facId;
+  return b.underConstruction
+    ? `${name} — under construction`
+    : `${name} — ${dept.name}`;
+}
+
+function showTip(b, e) {
+  const tip = el("campusTip");
+  if (!tip) return;
+  if (!b) { tip.hidden = true; return; }
+  const rect = campus.canvas.getBoundingClientRect();
+  tip.textContent = buildingLabel(b);
+  tip.hidden = false;
+  /* Keep the tip inside the frame rather than letting it run off the edge. */
+  const x = clamp(e.clientX - rect.left + 14, 6, rect.width - tip.offsetWidth - 6);
+  tip.style.left = Math.round(x) + "px";
+  tip.style.top = Math.round(clamp(e.clientY - rect.top - 30, 6, rect.height - 32)) + "px";
+}
+
+function onCampusClick(e) {
+  const a = pointerArt(e);
+  const hit = buildingAt(a.x, a.y);
   if (!hit) return;
   const card = document.querySelector(`.dept [data-dept="${hit.id}"]`);
   const article = card && card.closest(".dept");
   if (!article) return;
+  /* Clicking an annex opens the facilities list, since that is where it lives. */
+  if (hit.kind === "facility") {
+    const drawer = article.querySelector("details.facilities");
+    if (drawer) drawer.open = true;
+  }
   article.scrollIntoView({ behavior: "smooth", block: "center" });
   article.classList.add("flash");
   setTimeout(() => article.classList.remove("flash"), 1200);
@@ -896,7 +1040,30 @@ function campusUpdate(S) {
   v.learners = S.students + S.trainees;
   v.alumni = S.alumni;
   v.rep = S.rep;
+  v.tick = S.tick;
   v.over = S.over;
+
+  /* Note the month each facility first appears, so it can show as a site.
+
+     A loaded or restarted game must not raise scaffolding over buildings
+     that were already there, and stale entries from a previous run must
+     not suppress it on a facility bought again.
+     Normal play advances one month at a time, so any other jump in the
+     clock means the game was loaded or restarted under us. */
+  const jumped = campus.lastTick < 0 || S.tick < campus.lastTick
+              || S.tick - campus.lastTick > 1;
+  if (jumped) campus.builtAt = {};
+  const backdate = jumped;
+  campus.lastTick = S.tick;
+
+  for (const d of DEPARTMENTS) {
+    for (const facId of v.owned[d.id]) {
+      const key = d.id + ":" + facId;
+      if (campus.builtAt[key] === undefined) {
+        campus.builtAt[key] = backdate ? -CONSTRUCTION_MONTHS : S.tick;
+      }
+    }
+  }
 
   /* Only re-plan the site when something has actually been built. */
   const sig = DEPARTMENTS.map((d) =>
@@ -906,8 +1073,15 @@ function campusUpdate(S) {
     layoutBuildings();
   } else {
     for (const b of campus.buildings) {
-      if (b.kind === "block" && b.staff !== v.staff[b.id]) { b.staff = v.staff[b.id]; }
+      if (b.kind === "block") b.staff = v.staff[b.id];
     }
+  }
+
+  /* Scaffolding comes down a couple of months after a facility opens. */
+  for (const b of campus.buildings) {
+    if (b.kind !== "facility") continue;
+    const uc = isUnderConstruction(b.id, b.facId);
+    if (uc !== b.underConstruction) { b.underConstruction = uc; b.cache = null; }
   }
 
   campusSyncActors();

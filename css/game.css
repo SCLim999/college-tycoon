@@ -154,6 +154,21 @@ button:disabled { opacity: .38; cursor: not-allowed; }
 }
 #campus:active { cursor: grabbing; }
 
+.campus-tip {
+  position: absolute;
+  z-index: 2;
+  padding: 4px 9px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: rgba(10, 17, 28, .93);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: nowrap;
+  color: var(--text);
+  pointer-events: none;
+}
+.campus-tip[hidden] { display: none; }
+
 .campus-hint {
   position: absolute;
   right: 10px;

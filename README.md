@@ -74,7 +74,13 @@ site you are running, and a strictly read-only projection of the simulation:
 - **Staff and learners walk the paths.** The crowd grows with enrolment, staff
   characters appear per department as you hire, and graduates in gowns show up
   once alumni accumulate. They random-walk the path network tile by tile.
-- Drag to pan; click a department block to jump to its card.
+- **A facility bought this month is a building site** — scaffolding, hoarding
+  and a tower crane — for two months before it opens.
+- Parked cars fill the staff car park and lamps line the paths.
+- Hover any building to name it, drag to pan, click to jump to its card.
+  Hit-testing samples each building's alpha mask rather than its bounding box,
+  since iso boxes overlap heavily and the box under the cursor is usually not
+  the building you can see.
 
 The site plan follows [ViTrox Campus 2.0](https://www.cycarch.com/vitrox-campus-20/):
 a central circular courtyard built around a reflecting pool, department blocks
