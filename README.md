@@ -3,8 +3,15 @@
 A browser-based management simulation. You run a private college with five
 departments for five years, and the board scores what you built.
 
-Open `index.html` in any browser — no build step, no server,
-no dependencies. Progress saves to `localStorage`.
+**Play it: https://sclim999.github.io/college-tycoon/**
+
+Or open `index.html` in any browser — no build step, no server, no
+dependencies. Progress saves to `localStorage`.
+
+> Opening the file directly with `file://` works, but some browsers block
+> `localStorage` on file URLs, so Save/Load may be unavailable there. The game
+> says so rather than failing silently. Serve the folder
+> (`python3 -m http.server`) or use the link above if you want saves.
 
 ## The five departments
 
@@ -42,6 +49,19 @@ The loops that matter:
 Lose by dropping below −RM 300,000 or by letting reputation collapse. Otherwise
 the run ends at month 60 with a score and a standing, from *Struggling College*
 to *University College*.
+
+## Publishing
+
+The site is plain static files with no build step, so GitHub Pages serves the
+repository root as-is: **Settings → Pages → Source: Deploy from a branch →
+`main` / `/ (root)`**. No workflow file and no bundler run is needed.
+
+Every path in `index.html` is relative and the favicon is a data URI, so it
+works unchanged under the `/college-tycoon/` subpath Pages serves from.
+`.nojekyll` is present to skip Jekyll processing.
+
+Pages requires the repository to be **public** unless the account has GitHub
+Pro or higher.
 
 ## Files
 
