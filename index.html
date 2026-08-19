@@ -13,14 +13,14 @@
 <div id="app">
 
   <header class="topbar">
-    <div class="brand">🏛️ <span>College Tycoon</span><small>five-department campus sim</small></div>
+    <div class="brand">🏛️ <span data-i18n="app.title">College Tycoon</span><small data-i18n="app.sub">five-department campus sim</small></div>
     <div class="stats" id="stats"></div>
   </header>
 
   <div class="campus-frame">
     <canvas id="campus"></canvas>
     <div class="campus-tip" id="campusTip" hidden></div>
-    <div class="campus-hint">Hover a building to name it · drag to pan · click to jump to its card</div>
+    <div class="campus-hint" data-i18n="map.hint"></div>
   </div>
 
   <main>
@@ -29,12 +29,12 @@
     <aside class="side">
       <div class="panel" id="reportPanel"></div>
       <div class="panel">
-        <h4>Five-year trend</h4>
+        <h4 data-i18n="panel.trend"></h4>
         <canvas id="chart"></canvas>
         <div class="legend">
-          <span><i style="background:#2fd4d4"></i>Cash</span>
-          <span><i style="background:#3b82f6"></i>Learners</span>
-          <span><i style="background:#fbbf24"></i>Reputation</span>
+          <span><i style="background:#2fd4d4"></i><b data-i18n="legend.cash"></b></span>
+          <span><i style="background:#3b82f6"></i><b data-i18n="legend.learners"></b></span>
+          <span><i style="background:#fbbf24"></i><b data-i18n="legend.rep"></b></span>
         </div>
       </div>
       <div class="panel" id="objPanel"></div>
@@ -42,20 +42,19 @@
     </aside>
   </main>
 
-  <p class="foot-note">
-    A fictional management simulation. Department structure inspired by ViTrox College;
-    not an official ViTrox product and not a model of any real institution's finances.
-  </p>
+  <p class="foot-note" data-i18n="app.footnote"></p>
 
   <footer class="controls">
-    <button id="nextBtn" class="btn-primary">Advance one month ▶</button>
-    <button id="autoBtn">▶ Auto</button>
-    <span class="hint">Space advances a month</span>
+    <button id="nextBtn" class="btn-primary" data-i18n="ctrl.next"></button>
+    <button id="autoBtn" data-i18n="ctrl.auto"></button>
+    <span class="hint" data-i18n="ctrl.spaceHint"></span>
     <span class="spacer"></span>
-    <button id="saveBtn" class="btn-ghost">Save</button>
-    <button id="loadBtn" class="btn-ghost">Load</button>
-    <button id="helpBtn" class="btn-ghost">How to play</button>
-    <button id="restartBtn" class="btn-ghost">Restart</button>
+    <button id="saveBtn" class="btn-ghost" data-i18n="ctrl.save"></button>
+    <button id="loadBtn" class="btn-ghost" data-i18n="ctrl.load"></button>
+    <button id="helpBtn" class="btn-ghost" data-i18n="ctrl.help"></button>
+    <button id="fsBtn" class="btn-ghost" data-i18n="ctrl.fullscreen"></button>
+    <button id="langBtn" class="btn-ghost">中文</button>
+    <button id="restartBtn" class="btn-ghost" data-i18n="ctrl.restart"></button>
   </footer>
 
 </div>
@@ -63,19 +62,14 @@
 <!-- start screen -->
 <div class="overlay" id="startOverlay">
   <div class="card">
-    <h2>🏛️ College Tycoon</h2>
-    <p class="sub">Five years. Five departments. One campus to build.</p>
-    <p>
-      You have just been appointed to run a private college with five departments:
-      <b>College</b> (diploma &amp; degree), <b>Vocational Education</b> (TVET),
-      <b>Corporate Training</b> (industry clients), <b>Marketing</b> (enquiries and brand),
-      and <b>Education STEM</b> (school outreach). Every month you choose where the money goes.
-      After sixty months the board scores what you built.
-    </p>
+    <button id="langBtnStart" class="btn-ghost lang-pick"></button>
+    <h2>🏛️ <span data-i18n="app.title"></span></h2>
+    <p class="sub" data-i18n="start.tagline"></p>
+    <p data-i18n-html="start.body"></p>
     <div class="lineup" id="lineup"></div>
     <div class="diffs" id="diffList"></div>
-    <button id="newGameBtn" class="btn-primary" style="width:100%;padding:11px">Begin the five-year plan</button>
-    <button id="continueBtn" class="btn-ghost" style="width:100%;margin-top:9px;padding:10px" hidden>Continue saved game</button>
+    <button id="newGameBtn" class="btn-primary" style="width:100%;padding:11px" data-i18n="start.begin"></button>
+    <button id="continueBtn" class="btn-ghost" style="width:100%;margin-top:9px;padding:10px" data-i18n="start.continue" hidden></button>
   </div>
 </div>
 
@@ -92,31 +86,26 @@
 <!-- help modal -->
 <div class="overlay" id="helpOverlay" hidden>
   <div class="card">
-    <h2>How to play</h2>
-    <p class="sub">Everything compounds. Nothing is free.</p>
+    <h2 data-i18n="help.title"></h2>
+    <p class="sub" data-i18n="help.sub"></p>
     <ul class="rules">
-      <li><b>Marketing</b> generates enquiries; <b>reputation</b> and <b>conversion</b> turn them into
-          enrolments. Enrolments are capped by seats, so expand before you advertise.</li>
-      <li><b>College</b> and <b>Vocational</b> departments carry the recurring fee income.
-          Their quality depends on the learner-to-staff ratio — grow enrolment without hiring
-          and quality, reputation and retention all slide.</li>
-      <li><b>Corporate Training</b> converts industry partners into high-margin programmes.
-          You can only deliver as many programmes as your trainers can staff.</li>
-      <li><b>Education STEM</b> earns little directly, but feeds the applicant pipeline and
-          builds the community goodwill that lifts reputation.</li>
-      <li><b>Compliance</b> decays every month. Let it fall and the regulator will find you.</li>
-      <li><b>Funding modes</b> (Lean → Max) trade cash for output and staff morale.
-          Lean is a real option when the runway is short — just not for long.</li>
-      <li>The board reviews you every 12 months and may release a development grant.</li>
-      <li>You lose if cash falls below −RM 300,000 or reputation collapses.</li>
+      <li data-i18n-html="help.1"></li>
+      <li data-i18n-html="help.2"></li>
+      <li data-i18n-html="help.3"></li>
+      <li data-i18n-html="help.4"></li>
+      <li data-i18n-html="help.5"></li>
+      <li data-i18n-html="help.6"></li>
+      <li data-i18n-html="help.7"></li>
+      <li data-i18n-html="help.8"></li>
     </ul>
-    <button id="helpCloseBtn" class="btn-primary" style="width:100%;margin-top:14px;padding:10px">Back to campus</button>
+    <button id="helpCloseBtn" class="btn-primary" style="width:100%;margin-top:14px;padding:10px" data-i18n="help.close"></button>
   </div>
 </div>
 
 <div id="toast"></div>
 
 <script src="js/util.js"></script>
+<script src="js/i18n.js"></script>
 <script src="js/sprites.js"></script>
 <script src="js/data.js"></script>
 <script src="js/engine.js"></script>

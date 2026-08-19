@@ -46,7 +46,7 @@ function newGame(difficultyId) {
     report: null,       // last month's P&L
     over: null,         // {win:boolean, title, text, score, rank}
   };
-  pushNews(S, "info", "Semester one begins. The board expects a five-year turnaround.");
+  pushNews(S, "info", m("news.start"));
   S.history.push({ t: 0, cash: S.cash, students: S.students, rep: S.rep, net: 0 });
   return S;
 }
@@ -60,11 +60,17 @@ function totalStaff(S) {
 }
 
 function dateLabel(S) {
-  return `${MONTH_NAMES[S.month]} · Year ${S.year}`;
+  return t("date.fmt", { mon: monthName(S.month), y: S.year });
 }
 
-function pushNews(S, type, text) {
-  S.news.unshift({ tick: S.tick, date: dateLabel(S), type, text });
+/** Date for a stored history entry, rendered in the current language. */
+function dateOf(month, year) {
+  return t("date.fmt", { mon: monthName(month), y: year });
+}
+
+/** Store the message as {k, p} so the log re-renders when language changes. */
+function pushNews(S, type, msg, evId) {
+  S.news.unshift({ tick: S.tick, month: S.month, year: S.year, type, msg, evId });
   if (S.news.length > 120) S.news.length = 120;
 }
 
@@ -105,35 +111,35 @@ function facilityCost(S, facility) {
 function actUpgrade(S, deptId) {
   const d = deptById(deptId);
   const st = S.depts[deptId];
-  if (st.level >= d.maxLevel) return "Already at maximum level.";
+  if (st.level >= d.maxLevel) return t("err.maxLevel");
   const cost = upgradeCost(S, deptId);
-  if (S.cash < cost) return "Not enough cash.";
+  if (S.cash < cost) return t("err.cash");
   S.cash -= cost;
   st.level += 1;
-  pushNews(S, "good", `${d.name} expanded to level ${st.level} (${money(cost)}).`);
+  pushNews(S, "good", m("news.upgrade", { dept: deptName(d), level: st.level, cost: money(cost) }));
   return null;
 }
 
 function actHire(S, deptId) {
   const d = deptById(deptId);
   const cost = hireCost(S, deptId);
-  if (S.cash < cost) return "Not enough cash for the recruitment fee.";
+  if (S.cash < cost) return t("err.hireCash");
   S.cash -= cost;
   S.depts[deptId].staff += 1;
-  pushNews(S, "info", `Hired one ${d.staffTitle.replace(/s$/, "").toLowerCase()} for the ${d.name} (${money(cost)}).`);
+  pushNews(S, "info", m("news.hire", { role: deptStaffOne(d), dept: deptName(d), cost: money(cost) }));
   return null;
 }
 
 function actFire(S, deptId) {
   const d = deptById(deptId);
   const st = S.depts[deptId];
-  if (st.staff <= 1) return "Every department must keep at least one member of staff.";
+  if (st.staff <= 1) return t("err.lastStaff");
   const cost = severanceCost(S, deptId);
-  if (S.cash < cost) return "Not enough cash for severance.";
+  if (S.cash < cost) return t("err.severance");
   S.cash -= cost;
   st.staff -= 1;
   S.morale = clamp(S.morale - 3, 0, 100);
-  pushNews(S, "bad", `Released one ${d.staffTitle.replace(/s$/, "").toLowerCase()} from the ${d.name} (${money(cost)} severance).`);
+  pushNews(S, "bad", m("news.fire", { role: deptStaffOne(d), dept: deptName(d), cost: money(cost) }));
   return null;
 }
 
@@ -141,19 +147,19 @@ function actBuyFacility(S, deptId, facilityId) {
   const d = deptById(deptId);
   const st = S.depts[deptId];
   const f = d.facilities.find((x) => x.id === facilityId);
-  if (!f) return "Unknown facility.";
-  if (st.owned.includes(facilityId)) return "Already built.";
-  if (f.reqLevel && st.level < f.reqLevel) return `Requires ${d.name} level ${f.reqLevel}.`;
+  if (!f) return t("err.unknownFacility");
+  if (st.owned.includes(facilityId)) return t("err.built");
+  if (f.reqLevel && st.level < f.reqLevel) return t("err.needLevel", { dept: deptName(d), n: f.reqLevel });
   const cost = facilityCost(S, f);
-  if (S.cash < cost) return "Not enough cash.";
+  if (S.cash < cost) return t("err.cash");
   S.cash -= cost;
   st.owned.push(facilityId);
-  pushNews(S, "good", `Built: ${f.name} (${money(cost)}).`);
+  pushNews(S, "good", m("news.built", { name: facName(f), cost: money(cost) }));
   return null;
 }
 
 function actSetFunding(S, deptId, fundingId) {
-  if (!FUNDING.some((f) => f.id === fundingId)) return "Unknown funding mode.";
+  if (!FUNDING.some((f) => f.id === fundingId)) return t("err.unknownFunding");
   S.depts[deptId].funding = fundingId;
   return null;
 }
@@ -242,7 +248,9 @@ function advanceMonth(S) {
 
   const D = derive(S);
   const report = {
-    date: dateLabel(S),
+    /* Captured before the calendar advances, and stored as numbers so the
+       statement re-renders in whichever language is active. */
+    month: S.month, year: S.year,
     revenue: {}, cost: {},
     intakeCollege: 0, intakeVoc: 0, graduates: 0, vocGraduates: 0, dropouts: 0,
   };
@@ -259,7 +267,7 @@ function advanceMonth(S) {
   /* 2 — recruitment */
   let enrolled = 0;
   if (S.flags.intakeFreeze) {
-    pushNews(S, "bad", "Intake frozen this month — admissions staff are on audit duty.");
+    pushNews(S, "bad", m("news.intakeFrozen"));
   } else {
     const converted = D.leads * D.conversion;
     const vocShare = clamp(0.28 + S.depts.voc.level * 0.035, 0.2, 0.5);
@@ -278,7 +286,7 @@ function advanceMonth(S) {
     const turnedAway = Math.floor((wantCollege - report.intakeCollege) + (wantVoc - report.intakeVoc));
     if (turnedAway > 12) {
       S.rep -= 1.2;
-      pushNews(S, "bad", `${turnedAway} applicants turned away — the campus is full.`);
+      pushNews(S, "bad", m("news.turnedAway", { n: turnedAway }));
     }
   }
   report.leads = Math.round(D.leads);
@@ -345,7 +353,7 @@ function advanceMonth(S) {
 
   if (S.compliance < 30) {
     S.rep -= 1;
-    pushNews(S, "bad", "Accreditation paperwork is badly overdue. The regulator is watching.");
+    pushNews(S, "bad", m("news.complianceLow"));
   }
 
   /* 9 — expire one-month flags */
@@ -368,8 +376,10 @@ function advanceMonth(S) {
   if (S.history.length > 200) S.history.shift();
 
   pushNews(S, net >= 0 ? "good" : "bad",
-    `${net >= 0 ? "Surplus" : "Deficit"} of ${money(Math.abs(net))}. ` +
-    `${enrolled} new learners, ${report.graduates + report.vocGraduates} graduated.`);
+    m(net >= 0 ? "news.surplus" : "news.deficit", {
+      amount: money(Math.abs(net)), in: enrolled,
+      grad: report.graduates + report.vocGraduates,
+    }));
 
   /* 11 — annual board review */
   if (S.tick % 12 === 0) boardReview(S);
@@ -409,16 +419,16 @@ function boardReview(S) {
     const grant = 250000 + Math.round(S.rep * 4000);
     S.cash += grant;
     S.rep += 3;
-    pushNews(S, "good", `Board review: outstanding. Development grant of ${money(grant)} approved.`);
+    pushNews(S, "good", m("news.boardGreat", { grant: money(grant) }));
   } else if (kpi > 100) {
     const grant = 120000;
     S.cash += grant;
-    pushNews(S, "good", `Board review: on track. ${money(grant)} released for development.`);
+    pushNews(S, "good", m("news.boardGood", { grant: money(grant) }));
   } else if (kpi > 65) {
-    pushNews(S, "info", "Board review: satisfactory, no additional funding this year.");
+    pushNews(S, "info", m("news.boardOk"));
   } else {
     S.rep -= 4;
-    pushNews(S, "bad", "Board review: underperforming. The board has issued a formal warning.");
+    pushNews(S, "bad", m("news.boardBad"));
   }
 }
 
@@ -436,8 +446,7 @@ function maybeEvent(S) {
   S.seenEvents[ev.id] = S.tick;
 
   if (ev.auto) {
-    const msg = ev.apply(S);
-    pushNews(S, "event", `${ev.icon} ${ev.title} — ${msg}`);
+    pushNews(S, "event", ev.apply(S), ev.id);
   } else {
     S.pending = ev.id;
   }
@@ -451,7 +460,7 @@ function resolveEvent(S, choiceIndex) {
   if (!choice) return;
   const msg = choice.apply(S);
   clampAll(S);
-  pushNews(S, "event", `${ev.icon} ${ev.title} — ${msg}`);
+  pushNews(S, "event", msg, ev.id);
   checkEnd(S);
 }
 
@@ -468,11 +477,11 @@ function finalScore(S) {
 }
 
 function rankFor(score) {
-  if (score >= 8500) return "University College — a national reference campus";
-  if (score >= 6500) return "Premier College — the region's first choice";
-  if (score >= 4500) return "Established College — respected and stable";
-  if (score >= 2800) return "Growing College — the foundations are laid";
-  return "Struggling College — survived, barely";
+  if (score >= 8500) return m("rank.university");
+  if (score >= 6500) return m("rank.premier");
+  if (score >= 4500) return m("rank.established");
+  if (score >= 2800) return m("rank.growing");
+  return m("rank.struggling");
 }
 
 /** A run can end on the same tick an event fires. The end screen wins: drop the
@@ -487,26 +496,28 @@ function checkEnd(S) {
   if (S.over) return;
 
   if (S.cash < CFG.bankruptcyAt) {
-    endRun(S, { win: false, title: "Insolvent",
-      text: `Cash reached ${money(S.cash)}. The board has appointed administrators and the campus is closing.`,
-      score: finalScore(S), rank: "Closed by the board" },
-      "bad", "The college is insolvent. Game over.");
+    endRun(S, { win: false, title: m("end.insolvent.title"),
+      text: m("end.insolvent.text", { cash: money(S.cash) }),
+      score: finalScore(S), rank: m("rank.closed") },
+      "bad", m("news.insolvent"));
     return;
   }
   if (S.rep < CFG.collapseRepAt) {
-    endRun(S, { win: false, title: "Reputation Collapse",
-      text: "Reputation fell below the point of recovery. Enrolments have dried up and the regulator has suspended new intakes.",
-      score: finalScore(S), rank: "Deregistered" },
-      "bad", "Reputation collapse. Game over.");
+    endRun(S, { win: false, title: m("end.collapse.title"),
+      text: m("end.collapse.text"),
+      score: finalScore(S), rank: m("rank.dereg") },
+      "bad", m("news.repCollapse"));
     return;
   }
   if (S.tick >= CFG.finalMonth) {
     const score = finalScore(S);
-    endRun(S, { win: true, title: "Five-Year Plan Complete",
-      text: `${num(S.students + S.trainees)} learners on campus, ${Math.floor(S.partners)} industry partners, ` +
-            `${num(S.alumni)} graduates and ${money(S.cash)} in reserve.`,
+    endRun(S, { win: true, title: m("end.win.title"),
+      text: m("end.win.text", {
+        learners: num(S.students + S.trainees), partners: Math.floor(S.partners),
+        alumni: num(S.alumni), cash: money(S.cash),
+      }),
       score, rank: rankFor(score) },
-      "good", `Five-year plan complete. Final score ${num(score)}.`);
+      "good", m("news.complete", { score: num(score) }));
   }
 }
 
@@ -514,11 +525,11 @@ function checkEnd(S) {
 
 function objectives(S) {
   return [
-    { label: "1,200 learners enrolled", now: S.students + S.trainees, goal: 1200 },
-    { label: "25 industry partners", now: Math.floor(S.partners), goal: 25 },
-    { label: "Reputation 85", now: Math.round(S.rep), goal: 85 },
-    { label: "Compliance 80", now: Math.round(S.compliance), goal: 80 },
-    { label: "RM 3M in reserve", now: Math.max(0, Math.round(S.cash)), goal: 3000000 },
+    { label: t("obj.learners"), now: S.students + S.trainees, goal: 1200 },
+    { label: t("obj.partners"), now: Math.floor(S.partners), goal: 25 },
+    { label: t("obj.rep"), now: Math.round(S.rep), goal: 85 },
+    { label: t("obj.compliance"), now: Math.round(S.compliance), goal: 80 },
+    { label: t("obj.cash"), now: Math.max(0, Math.round(S.cash)), goal: 3000000 },
   ];
 }
 

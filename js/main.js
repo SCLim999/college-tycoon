@@ -6,6 +6,46 @@ let S = null;
 let autoTimer = null;
 let chosenDifficulty = "standard";
 
+/** Paint every static data-i18n slot in the page for the active language. */
+function applyStaticText() {
+  for (const node of document.querySelectorAll("[data-i18n]")) {
+    node.textContent = t(node.dataset.i18n);
+  }
+  for (const node of document.querySelectorAll("[data-i18n-html]")) {
+    node.innerHTML = t(node.dataset.i18nHtml);
+  }
+  /* Both toggles show the language they switch *to*. */
+  const other = LANGS.find((l) => l.id !== getLang());
+  for (const id of ["langBtn", "langBtnStart"]) {
+    el(id).textContent = other.label;
+    el(id).title = other.name;
+  }
+  el("fsBtn").textContent = t(isFullscreen() ? "ctrl.exitFullscreen" : "ctrl.fullscreen");
+  if (autoTimer) el("autoBtn").textContent = t("ctrl.pause");
+  document.title = t("app.title");
+}
+
+/** Re-render everything that holds text. Stored {k,p} messages retranslate. */
+function switchLang(id) {
+  setLang(id);
+  applyStaticText();
+  renderStartScreen();
+  if (S) render(S);
+}
+
+function isFullscreen() {
+  return !!(document.fullscreenElement || document.webkitFullscreenElement);
+}
+
+function toggleFullscreen() {
+  const target = document.documentElement;
+  if (isFullscreen()) {
+    (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+  } else if (target.requestFullscreen || target.webkitRequestFullscreen) {
+    (target.requestFullscreen || target.webkitRequestFullscreen).call(target);
+  }
+}
+
 /** Sandboxed frames can block window.confirm; treat a blocked prompt as consent
     rather than leaving the button silently dead. */
 function askConfirm(question) {
@@ -21,15 +61,15 @@ function askConfirm(question) {
 function renderStartScreen() {
   el("lineup").innerHTML = DEPARTMENTS.map((d) =>
     `<figure><canvas class="avatar" data-sprite="${d.id}"></canvas>
-       <figcaption>${esc(d.name.replace(/ Department$/, ""))}</figcaption></figure>`).join("");
+       <figcaption>${esc(deptName(d).replace(/ Department$/, ""))}</figcaption></figure>`).join("");
   for (const cv of el("lineup").querySelectorAll("canvas.avatar")) {
     drawAvatar(cv, cv.dataset.sprite, 4);
   }
 
   el("diffList").innerHTML = DIFFICULTIES.map((d) =>
     `<button class="diff${d.id === chosenDifficulty ? " on" : ""}" data-diff="${d.id}">
-       <div class="dn">${esc(d.name)} · starting cash ${moneyShort(d.cash)}</div>
-       <div class="dd">${esc(d.desc)}</div>
+       <div class="dn">${esc(t("start.diff", { name: diffName(d), cash: moneyShort(d.cash) }))}</div>
+       <div class="dd">${esc(diffDesc(d))}</div>
      </button>`).join("");
   el("continueBtn").hidden = !hasSave();
 }
@@ -44,7 +84,7 @@ function startGame(state) {
 
 function stopAuto() {
   if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
-  el("autoBtn").textContent = "▶ Auto";
+  el("autoBtn").textContent = t("ctrl.auto");
   el("autoBtn").classList.remove("btn-accent");
 }
 
@@ -55,7 +95,7 @@ function toggleAuto() {
     advanceMonth(S);
     render(S);
   }, 1800);
-  el("autoBtn").textContent = "⏸ Pause";
+  el("autoBtn").textContent = t("ctrl.pause");
   el("autoBtn").classList.add("btn-accent");
 }
 
@@ -82,7 +122,25 @@ function onDeptClick(e) {
 
 function init() {
   campusInit();
+  applyStaticText();
   renderStartScreen();
+
+  for (const id of ["langBtn", "langBtnStart"]) {
+    el(id).addEventListener("click", () => {
+      switchLang(LANGS.find((l) => l.id !== getLang()).id);
+    });
+  }
+
+  el("fsBtn").addEventListener("click", toggleFullscreen);
+  for (const ev of ["fullscreenchange", "webkitfullscreenchange"]) {
+    document.addEventListener(ev, () => {
+      document.body.classList.toggle("is-fullscreen", isFullscreen());
+      el("fsBtn").textContent = t(isFullscreen() ? "ctrl.exitFullscreen" : "ctrl.fullscreen");
+      /* The map is sized from its container, which just changed. */
+      campusResize();
+      if (S) renderChart(S);
+    });
+  }
 
   el("diffList").addEventListener("click", (e) => {
     const b = e.target.closest("[data-diff]");
@@ -95,9 +153,9 @@ function init() {
 
   el("continueBtn").addEventListener("click", () => {
     const saved = loadGame();
-    if (!saved) { toast("No compatible save found.", true); renderStartScreen(); return; }
+    if (!saved) { toast(t("toast.noSave"), true); renderStartScreen(); return; }
     startGame(saved);
-    toast("Save loaded.");
+    toast(t("toast.loaded"));
   });
 
   el("depts").addEventListener("click", onDeptClick);
@@ -120,20 +178,20 @@ function init() {
   el("saveBtn").addEventListener("click", () => {
     if (!S) return;
     const ok = saveGame(S);
-    toast(ok ? "Progress saved." : "Could not save — storage unavailable.", !ok);
+    toast(t(ok ? "toast.saved" : "toast.saveFail"), !ok);
   });
 
   el("loadBtn").addEventListener("click", () => {
     const saved = loadGame();
-    if (!saved) { toast("No compatible save found.", true); return; }
+    if (!saved) { toast(t("toast.noSave"), true); return; }
     stopAuto();
     S = saved;
     render(S);
-    toast("Save loaded.");
+    toast(t("toast.loaded"));
   });
 
   el("restartBtn").addEventListener("click", () => {
-    if (S && !S.over && !askConfirm("Abandon this five-year plan and start over?")) return;
+    if (S && !S.over && !askConfirm(t("confirm.restart"))) return;
     stopAuto();
     S = null;
     el("endOverlay").hidden = true;

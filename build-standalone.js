@@ -20,8 +20,9 @@ const out = args.find((a) => !a.startsWith("--")) || path.join(root, "college-ty
 const read = (p) => fs.readFileSync(path.join(root, p), "utf8");
 
 /* Script order matters: util defines helpers the data tables call at runtime. */
-const SCRIPTS = ["js/util.js", "js/sprites.js", "js/data.js", "js/engine.js",
-                 "js/campus.js", "js/ui.js", "js/main.js"];
+/* util defines MONTH_NAMES, which i18n reads; data/engine/ui all call t(). */
+const SCRIPTS = ["js/util.js", "js/i18n.js", "js/sprites.js", "js/data.js",
+                 "js/engine.js", "js/campus.js", "js/ui.js", "js/main.js"];
 
 let html = read("index.html");
 

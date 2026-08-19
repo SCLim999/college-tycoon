@@ -373,7 +373,12 @@ function campusInit() {
 function campusResize() {
   if (!campus.canvas) return;
   const cssW = campus.canvas.parentElement.clientWidth || 900;
-  const cssH = cssW < 720 ? 340 : 580;
+  /* Fullscreen gives the map a bigger share of the screen — but never less
+     than it already had, or entering fullscreen on a short display would
+     shrink the very thing it is meant to enlarge. */
+  const base = cssW < 720 ? 340 : 580;
+  const full = document.body.classList.contains("is-fullscreen");
+  const cssH = full ? clamp(Math.round(window.innerHeight * 0.62), base, 900) : base;
   campus.scale = 2;
   campus.artW = Math.ceil(cssW / campus.scale);
   campus.artH = Math.ceil(cssH / campus.scale);
@@ -987,13 +992,16 @@ function buildingLabel(b) {
   const dept = deptById(b.id);
   if (!dept) return "";
   if (b.kind === "block") {
-    return `${dept.name} — level ${b.level}, ${b.staff} ${dept.staffTitle.toLowerCase()}`;
+    return t("map.block", {
+      dept: deptName(dept), level: b.level, n: b.staff,
+      staff: deptStaff(dept).toLowerCase(),
+    });
   }
   const fac = dept.facilities.find((f) => f.id === b.facId);
-  const name = fac ? fac.name : b.facId;
+  const name = fac ? facName(fac) : b.facId;
   return b.underConstruction
-    ? `${name} — under construction`
-    : `${name} — ${dept.name}`;
+    ? t("map.building", { name })
+    : t("map.facility", { name, dept: deptName(dept) });
 }
 
 function showTip(b, e) {

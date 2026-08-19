@@ -27,17 +27,17 @@ function toast(text, bad) {
 function renderStats(S) {
   const tone = (v, lo, hi) => (v < lo ? "bad" : v >= hi ? "good" : "warn");
   const stats = [
-    { k: "Date", v: dateLabel(S) },
-    { k: "Cash", v: moneyShort(S.cash), c: S.cash < 0 ? "bad" : S.cash > 1500000 ? "good" : "" },
-    { k: "Net / mo", v: S.report ? moneyShort(S.report.net) : "—",
+    { k: t("stat.date"), v: dateLabel(S) },
+    { k: t("stat.cash"), v: moneyShort(S.cash), c: S.cash < 0 ? "bad" : S.cash > 1500000 ? "good" : "" },
+    { k: t("stat.net"), v: S.report ? moneyShort(S.report.net) : "—",
       c: S.report ? (S.report.net >= 0 ? "good" : "bad") : "" },
-    { k: "Learners", v: num(S.students + S.trainees) },
-    { k: "Reputation", v: Math.round(S.rep), c: tone(S.rep, 30, 70) },
-    { k: "Quality", v: Math.round(S.quality), c: tone(S.quality, 40, 72) },
-    { k: "Compliance", v: Math.round(S.compliance), c: tone(S.compliance, 40, 70) },
-    { k: "Morale", v: Math.round(S.morale), c: tone(S.morale, 40, 70) },
-    { k: "Partners", v: Math.floor(S.partners) },
-    { k: "Staff", v: totalStaff(S) },
+    { k: t("stat.learners"), v: num(S.students + S.trainees) },
+    { k: t("stat.rep"), v: Math.round(S.rep), c: tone(S.rep, 30, 70) },
+    { k: t("stat.quality"), v: Math.round(S.quality), c: tone(S.quality, 40, 72) },
+    { k: t("stat.compliance"), v: Math.round(S.compliance), c: tone(S.compliance, 40, 70) },
+    { k: t("stat.morale"), v: Math.round(S.morale), c: tone(S.morale, 40, 70) },
+    { k: t("stat.partners"), v: Math.floor(S.partners) },
+    { k: t("stat.staff"), v: totalStaff(S) },
   ];
   el("stats").innerHTML = stats.map((s) =>
     `<div class="stat"><div class="k">${s.k}</div>` +
@@ -51,38 +51,38 @@ function deptMetrics(S, dept, D) {
   switch (dept.id) {
     case "college":
       return [
-        ["Students", `${num(S.students)} / ${num(D.collegeCapacity)}`],
-        ["Teaching quality", Math.round(S.quality)],
-        ["Student : lecturer", `${D.studentRatio.toFixed(1)} : 1`],
-        ["Tuition income", moneyShort(S.students * CFG.tuitionCollege * (1 + sumEffect(S, "feeMult")))],
+        [t("m.students"), `${num(S.students)} / ${num(D.collegeCapacity)}`],
+        [t("m.quality"), Math.round(S.quality)],
+        [t("m.ratio"), `${D.studentRatio.toFixed(1)} : 1`],
+        [t("m.tuition"), moneyShort(S.students * CFG.tuitionCollege * (1 + sumEffect(S, "feeMult")))],
       ];
     case "voc":
       return [
-        ["Trainees", `${num(S.trainees)} / ${num(D.vocCapacity)}`],
-        ["Workshop quality", Math.round(S.vocQuality)],
-        ["Employability", Math.round(S.employability)],
-        ["Course income", moneyShort(S.trainees * CFG.tuitionVoc * (1 + sumEffect(S, "vocFeeMult")))],
+        [t("m.trainees"), `${num(S.trainees)} / ${num(D.vocCapacity)}`],
+        [t("m.vocQuality"), Math.round(S.vocQuality)],
+        [t("m.employability"), Math.round(S.employability)],
+        [t("m.courseIncome"), moneyShort(S.trainees * CFG.tuitionVoc * (1 + sumEffect(S, "vocFeeMult")))],
       ];
     case "ctd":
       return [
-        ["Partners", `${Math.floor(S.partners)} / ${Math.round(D.partnerCap)}`],
-        ["Demand vs capacity", `${D.ctdDemand.toFixed(1)} / ${D.ctdThroughput.toFixed(1)}`],
-        ["Fee / programme", moneyShort(D.programFee)],
-        ["Margin / month", moneyShort(D.programmes * D.programFee - D.deliveryCost)],
+        [t("m.partners"), `${Math.floor(S.partners)} / ${Math.round(D.partnerCap)}`],
+        [t("m.demand"), `${D.ctdDemand.toFixed(1)} / ${D.ctdThroughput.toFixed(1)}`],
+        [t("m.feeEach"), moneyShort(D.programFee)],
+        [t("m.margin"), moneyShort(D.programmes * D.programFee - D.deliveryCost)],
       ];
     case "mkt":
       return [
-        ["Enquiries / mo", num(D.leads)],
-        ["Conversion", `${(D.conversion * 100).toFixed(1)}%`],
-        ["Expected intake", num(D.leads * D.conversion)],
-        ["Brand bonus", `+${sumEffect(S, "brand")}`],
+        [t("m.leads"), num(D.leads)],
+        [t("m.conversion"), `${(D.conversion * 100).toFixed(1)}%`],
+        [t("m.intake"), num(D.leads * D.conversion)],
+        [t("m.brand"), `+${sumEffect(S, "brand")}`],
       ];
     case "stem":
       return [
-        ["Workshops / mo", D.workshops.toFixed(1)],
-        ["Pipeline", `+${num((st.level * 9 + st.staff * 6 + sumEffect(S, "pipeline")) * fundingById(st.funding).outputMult)}`],
-        ["Fee / workshop", moneyShort(D.workshopFee)],
-        ["Outreach income", moneyShort(D.workshops * D.workshopFee)],
+        [t("m.workshops"), D.workshops.toFixed(1)],
+        [t("m.pipeline"), `+${num((st.level * 9 + st.staff * 6 + sumEffect(S, "pipeline")) * fundingById(st.funding).outputMult)}`],
+        [t("m.workshopFee"), moneyShort(D.workshopFee)],
+        [t("m.outreach"), moneyShort(D.workshops * D.workshopFee)],
       ];
     default:
       return [];
@@ -101,13 +101,13 @@ function renderDepts(S) {
     const upCost = upgradeCost(S, dept.id);
     const maxed = st.level >= dept.maxLevel;
     const upBtn = maxed
-      ? `<button class="mini" disabled>Level ${dept.maxLevel} — maxed</button>`
+      ? `<button class="mini" disabled>${esc(t("card.maxed", { n: dept.maxLevel }))}</button>`
       : `<button class="mini btn-accent" data-act="upgrade" data-dept="${dept.id}"` +
-        `${locked || S.cash < upCost ? " disabled" : ""}>Expand → L${st.level + 1} · ${moneyShort(upCost)}</button>`;
+        `${locked || S.cash < upCost ? " disabled" : ""}>${esc(t("card.expand", { n: st.level + 1, cost: moneyShort(upCost) }))}</button>`;
 
     const funding = FUNDING.map((f) =>
       `<button data-act="funding" data-dept="${dept.id}" data-funding="${f.id}"` +
-      `${st.funding === f.id ? ' class="on"' : ""}${locked ? " disabled" : ""}>${f.name}</button>`).join("");
+      `${st.funding === f.id ? ' class="on"' : ""}${locked ? " disabled" : ""}>${esc(fundName(f))}</button>`).join("");
 
     const hc = hireCost(S, dept.id), sc = severanceCost(S, dept.id);
 
@@ -118,11 +118,11 @@ function renderDepts(S) {
       const btn = owned
         ? ""
         : needLevel
-          ? `<button class="mini" disabled>Needs L${f.reqLevel}</button>`
+          ? `<button class="mini" disabled>${esc(t("card.needLevel", { n: f.reqLevel }))}</button>`
           : `<button class="mini" data-act="buy" data-dept="${dept.id}" data-fac="${f.id}"` +
             `${locked || S.cash < cost ? " disabled" : ""}>${moneyShort(cost)}</button>`;
       return `<div class="fac${owned ? " owned" : ""}">
-          <div class="info"><div class="n">${esc(f.name)}</div><div class="d">${esc(f.desc)}</div></div>
+          <div class="info"><div class="n">${esc(facName(f))}</div><div class="d">${esc(facDesc(f))}</div></div>
           ${btn}
         </div>`;
     }).join("");
@@ -133,28 +133,28 @@ function renderDepts(S) {
       <div class="dept-head">
         <canvas class="dept-icon avatar" data-sprite="${dept.id}"></canvas>
         <div class="dept-title">
-          <h3>${esc(dept.name)}</h3>
-          <p>${esc(dept.tagline)}</p>
+          <h3>${esc(deptName(dept))}</h3>
+          <p>${esc(deptTagline(dept))}</p>
         </div>
-        <div class="level-badge">L${st.level}</div>
+        <div class="level-badge">${esc(t("card.level", { n: st.level }))}</div>
       </div>
       <div class="dept-metrics">${metrics}</div>
       <div class="dept-body">
         <div class="row">
-          <span class="label">${esc(dept.staffTitle)}</span>
+          <span class="label">${esc(deptStaff(dept))}</span>
           <strong>${st.staff}</strong>
           <button class="mini" data-act="hire" data-dept="${dept.id}"${locked || S.cash < hc ? " disabled" : ""}>+1 · ${moneyShort(hc)}</button>
           <button class="mini" data-act="fire" data-dept="${dept.id}"${locked || st.staff <= 1 || S.cash < sc ? " disabled" : ""}>−1 · ${moneyShort(sc)}</button>
-          <span class="hint" style="margin-left:auto;font-size:11.5px;color:var(--muted)">${moneyShort(st.staff * dept.salary * S.payrollMult)}/mo</span>
+          <span class="hint" style="margin-left:auto;font-size:11.5px;color:var(--muted)">${esc(t("card.perMonth", { cost: moneyShort(st.staff * dept.salary * S.payrollMult) }))}</span>
         </div>
         <div class="row">
-          <span class="label">Funding</span>
+          <span class="label">${esc(t("card.funding"))}</span>
           <div class="seg">${funding}</div>
-          <span style="margin-left:auto;font-size:11.5px;color:var(--muted)">${moneyShort(dept.opex * st.level * fundingById(st.funding).costMult)}/mo</span>
+          <span style="margin-left:auto;font-size:11.5px;color:var(--muted)">${esc(t("card.perMonth", { cost: moneyShort(dept.opex * st.level * fundingById(st.funding).costMult) }))}</span>
         </div>
-        <div class="row">${upBtn}<span style="font-size:11.5px;color:var(--muted)">${esc(dept.levelNote)}</span></div>
+        <div class="row">${upBtn}<span style="font-size:11.5px;color:var(--muted)">${esc(deptLevelNote(dept))}</span></div>
         <details class="facilities" data-drawer="${dept.id}"${openDrawers.has(dept.id) ? " open" : ""}>
-          <summary>Facilities &amp; programmes (${builtCount}/${dept.facilities.length})</summary>
+          <summary>${esc(t("card.facilities", { have: builtCount, total: dept.facilities.length }))}</summary>
           ${facs}
         </details>
       </div>
@@ -173,27 +173,27 @@ function renderReport(S) {
   const r = S.report;
   if (!r) {
     el("reportPanel").innerHTML =
-      `<h4>Monthly statement</h4><p style="color:var(--muted);font-size:13px;margin:0">` +
-      `Advance a month to see the first statement.</p>`;
+      `<h4>${esc(t("panel.statementEmpty"))}</h4>` +
+      `<p style="color:var(--muted);font-size:13px;margin:0">${esc(t("panel.statementHint"))}</p>`;
     return;
   }
   const line = (k, v, cls) =>
     `<div class="pl"><span>${k}</span><span class="${cls || ""}">${money(v)}</span></div>`;
 
   el("reportPanel").innerHTML = `
-    <h4>Statement · ${esc(r.date)}</h4>
-    ${line("Tuition (college)", r.revenue.tuition, "pos")}
-    ${line("Vocational fees", r.revenue.vocational, "pos")}
-    ${line("Corporate training", r.revenue.corporate, "pos")}
-    ${line("STEM outreach", r.revenue.outreach, "pos")}
-    ${line("Payroll", -r.cost.payroll, "neg")}
-    ${line("Programme delivery", -r.cost.delivery, "neg")}
-    ${line("Department budgets", -r.cost.departments, "neg")}
-    ${line("Facility upkeep", -r.cost.upkeep, "neg")}
-    ${line("Campus & utilities", -r.cost.campus, "neg")}
-    <div class="pl total"><span>Net</span><span class="${r.net >= 0 ? "pos" : "neg"}">${money(r.net)}</span></div>
+    <h4>${esc(t("panel.statement", { date: dateOf(r.month, r.year) }))}</h4>
+    ${line(t("pl.tuition"), r.revenue.tuition, "pos")}
+    ${line(t("pl.vocational"), r.revenue.vocational, "pos")}
+    ${line(t("pl.corporate"), r.revenue.corporate, "pos")}
+    ${line(t("pl.outreach"), r.revenue.outreach, "pos")}
+    ${line(t("pl.payroll"), -r.cost.payroll, "neg")}
+    ${line(t("pl.delivery"), -r.cost.delivery, "neg")}
+    ${line(t("pl.departments"), -r.cost.departments, "neg")}
+    ${line(t("pl.upkeep"), -r.cost.upkeep, "neg")}
+    ${line(t("pl.campus"), -r.cost.campus, "neg")}
+    <div class="pl total"><span>${esc(t("pl.net"))}</span><span class="${r.net >= 0 ? "pos" : "neg"}">${money(r.net)}</span></div>
     <div class="pl" style="color:var(--muted);font-size:12px;margin-top:6px">
-      <span>Intake ${r.intakeCollege + r.intakeVoc} · Graduated ${r.graduates + r.vocGraduates} · Left ${r.dropouts}</span>
+      <span>${esc(t("pl.flow", { in: r.intakeCollege + r.intakeVoc, grad: r.graduates + r.vocGraduates, out: r.dropouts }))}</span>
     </div>`;
 }
 
@@ -209,12 +209,17 @@ function renderObjectives(S) {
   }).join("");
   const monthsLeft = Math.max(0, CFG.finalMonth - S.tick);
   el("objPanel").innerHTML =
-    `<h4>Five-year objectives · ${monthsLeft} months left</h4>${rows}`;
+    `<h4>${esc(t("panel.objectives", { n: monthsLeft }))}</h4>${rows}`;
 }
 
 function renderNews(S) {
-  el("newsPanel").innerHTML = `<h4>Campus news</h4>` + S.news.map((n) =>
-    `<div class="news-item ${n.type}"><div class="when">${esc(n.date)}</div>${esc(n.text)}</div>`).join("");
+  el("newsPanel").innerHTML = `<h4>${esc(t("panel.news"))}</h4>` + S.news.map((n) => {
+    const ev = n.evId && EVENTS.find((e) => e.id === n.evId);
+    const body = ev
+      ? `${ev.icon} ${t("ev." + ev.id + ".title")} — ${tr(n.msg)}`
+      : tr(n.msg);
+    return `<div class="news-item ${n.type}"><div class="when">${esc(dateOf(n.month, n.year))}</div>${esc(body)}</div>`;
+  }).join("");
 }
 
 /* ---------- chart ---------- */
@@ -268,8 +273,8 @@ function renderChart(S) {
 
   ctx.fillStyle = "#5f7a9e";
   ctx.font = "10px system-ui, sans-serif";
-  ctx.fillText(`month ${hist[0].t}`, pad.l, h - 3);
-  const endLabel = `month ${hist[hist.length - 1].t}`;
+  ctx.fillText(t("chart.month", { n: hist[0].t }), pad.l, h - 3);
+  const endLabel = t("chart.month", { n: hist[hist.length - 1].t });
   ctx.fillText(endLabel, w - pad.r - ctx.measureText(endLabel).width, h - 3);
 }
 
@@ -282,13 +287,13 @@ function renderEventModal(S) {
   if (!ev) { ov.hidden = true; return; }
 
   el("eventBody").innerHTML = `
-    <h2>${ev.icon} ${esc(ev.title)}</h2>
+    <h2>${ev.icon} ${esc(t(`ev.${ev.id}.title`))}</h2>
     <p class="sub">${esc(dateLabel(S))}</p>
-    <p>${esc(ev.text)}</p>
+    <p>${esc(t(`ev.${ev.id}.text`))}</p>
     ${ev.choices.map((c, i) =>
       `<button class="choice" data-choice="${i}">
-         <div class="cl">${esc(c.label)}</div>
-         <div class="cd">${esc(c.detail)}</div>
+         <div class="cl">${esc(t(`ev.${ev.id}.c${i}.l`))}</div>
+         <div class="cd">${esc(t(`ev.${ev.id}.c${i}.d`))}</div>
        </button>`).join("")}`;
   ov.hidden = false;
 }
@@ -298,13 +303,13 @@ function renderEndModal(S) {
   if (!S.over) { ov.hidden = true; return; }
   const o = S.over;
   el("endBody").innerHTML = `
-    <h2>${o.win ? "🏛️" : "⚠️"} ${esc(o.title)}</h2>
-    <p class="sub">${esc(dateLabel(S))} · ${esc(difficultyOf(S).name)} difficulty</p>
-    <p>${esc(o.text)}</p>
-    <div class="pl total"><span>Final score</span><span>${num(o.score)}</span></div>
-    <div class="pl"><span>Standing</span><span>${esc(o.rank)}</span></div>
+    <h2>${o.win ? "🏛️" : "⚠️"} ${esc(tr(o.title))}</h2>
+    <p class="sub">${esc(t("end.sub", { date: dateLabel(S), diff: diffName(difficultyOf(S)) }))}</p>
+    <p>${esc(tr(o.text))}</p>
+    <div class="pl total"><span>${esc(t("end.score"))}</span><span>${num(o.score)}</span></div>
+    <div class="pl"><span>${esc(t("end.standing"))}</span><span>${esc(tr(o.rank))}</span></div>
     <button class="choice btn-primary" data-act="restart" style="margin-top:18px">
-      <div class="cl">Start a new five-year plan</div>
+      <div class="cl">${esc(t("end.again"))}</div>
     </button>`;
   ov.hidden = false;
 }
@@ -325,5 +330,5 @@ function render(S) {
   const blocked = !!S.pending || !!S.over;
   el("nextBtn").disabled = blocked;
   el("autoBtn").disabled = blocked;
-  el("nextBtn").textContent = blocked && S.pending ? "Resolve the event first" : "Advance one month ▶";
+  el("nextBtn").textContent = t(blocked && S.pending ? "ctrl.blocked" : "ctrl.next");
 }

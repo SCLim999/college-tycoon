@@ -50,6 +50,29 @@ Lose by dropping below −RM 300,000 or by letting reputation collapse. Otherwis
 the run ends at month 60 with a score and a standing, from *Struggling College*
 to *University College*.
 
+## Languages
+
+The game ships in English and Simplified Chinese; the **EN / 中文** button in
+the footer switches between them, and the choice is remembered. A Chinese
+browser gets Chinese on first load.
+
+Every player-visible string lives in `js/i18n.js` under a key — the game data
+holds ids and numbers only. Adding a language means adding one block to `DICT`
+and one entry to `LANGS`; nothing else changes.
+
+News entries, the monthly statement and the end-of-run screen store their text
+as `{key, params}` rather than finished sentences, so switching language
+mid-game re-renders the whole history instead of leaving a bilingual log
+behind. Missing keys fall back to English and then to the key itself, so a gap
+shows up as an obvious token rather than a blank.
+
+## Fullscreen
+
+The **⛶** button puts the page into fullscreen: the outer width cap is
+dropped, the map runs edge to edge and takes a larger share of the screen —
+but never less height than it already had, so entering fullscreen on a short
+display cannot shrink the map.
+
 ## Publishing
 
 The site is plain static files with no build step, so GitHub Pages serves the
@@ -70,6 +93,7 @@ Pro or higher.
 | `index.html` | Page shell, start/event/end/help modals |
 | `css/game.css` | Styling |
 | `js/util.js` | Formatting and small helpers |
+| `js/i18n.js` | **All display text** — English and 简体中文, plus `t()` |
 | `js/sprites.js` | Pixel-art characters — string grids plus the drawing routine |
 | `js/campus.js` | The animated campus scene |
 | `js/data.js` | **All tuning lives here** — economy constants, departments, facilities, difficulties, events |
